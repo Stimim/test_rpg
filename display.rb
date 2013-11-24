@@ -106,6 +106,7 @@ class Display
   def initialize
     Curses.init_screen()
     Curses.noecho
+    Curses.curs_set 0
     @menu = MenuWindow.new
     @dungeon = DungeonWindow.new
     @status_bar = StatusBar.new

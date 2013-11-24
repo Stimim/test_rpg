@@ -57,14 +57,51 @@ class ControllableBeing < Being
 
   # cmd is an Fixnum, please implement this function.
   def take_action game, dungeon, display, cmd
-    if @env == nil or !(@env.take_action self, game, display, cmd)
-      display.message.append "no such command '#{cmd.chr}'"
-    end
+    suc = false
+    suc = (@env != nil and (@env.take_action self, game, display, cmd)) if !suc
+    suc = (basic_action game, dungeon, display, cmd) if !suc
+    display.message.append "no such command '#{cmd.chr}'" if !suc
     return true
   end
 
   def control game, dungeon, display
     cmd = display.dungeon.getch
     take_action game, dungeon, display, cmd
+  end
+
+  private
+  def move_to dungeon, delta_x, delta_y
+    if dungeon.move_to(self, cor_x, cor_y, cor_x + delta_x, cor_y + delta_y)
+      @cor_x = cor_x + delta_x
+      @cor_y = cor_y + delta_y
+    else
+      display.message.append "You can't go that way..."
+    end
+  end
+
+  public
+  def basic_action game, dungeon, display, cmd
+    case cmd
+    when ?Q
+      display.message.append "Quit? [y/N]"
+      answer = display.message.getch
+      if answer == ?Y or answer == ?y
+        game.over
+      else
+        display.message.append "Never mind."
+      end
+    when ?l then move_to dungeon, 1, 0
+    when ?h then move_to dungeon, -1, 0
+    when ?j then move_to dungeon, 0, 1
+    when ?k then move_to dungeon, 0, -1
+    when ?y then move_to dungeon, -1, -1
+    when ?u then move_to dungeon, 1, -1
+    when ?b then move_to dungeon, -1, 1
+    when ?n then move_to dungeon, 1, 1
+    when ?\C-p then display.message.list_all
+    else
+      return false
+    end
+    return true
   end
 end

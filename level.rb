@@ -3,17 +3,16 @@
 require 'singleton'
 
 class DungeonFeatures
-  # attr_reader :symbol
-
   private_class_method :new
 
-  def DungeonFeatures.create symbol, do_cmd
-    new(symbol, do_cmd)
+  def DungeonFeatures.create symbol, open_area=false, do_cmd=nil
+    new(symbol, do_cmd, open_area)
   end
 
-  def initialize symbol, do_cmd
+  def initialize symbol, do_cmd, open_area
     @symbol = symbol
     @do_cmd = do_cmd
+    @open_area = open_area
   end
 
   def take_action who, game, display, cmd
@@ -26,8 +25,12 @@ class DungeonFeatures
     window << @symbol
   end
 
+  def open_area?
+    @open_area
+  end
+
   public
-  STAIR_UP = DungeonFeatures.create('<', lambda do |who, game, display, cmd|
+  STAIR_UP = DungeonFeatures.create('<', true, lambda do |who, game, display, cmd|
     if cmd == ?<
       display.message.append "go upstair"
       return true
@@ -35,7 +38,7 @@ class DungeonFeatures
     return false
   end)
 
-  STAIR_DOWN = DungeonFeatures.create('>', lambda do |who, game, display, cmd|
+  STAIR_DOWN = DungeonFeatures.create('>', true, lambda do |who, game, display, cmd|
     if cmd == ?>
       display.message.append "go downstair"
       return true
@@ -43,7 +46,7 @@ class DungeonFeatures
     return false
   end)
 
-  SPACE = DungeonFeatures.create('.', nil)
+  SPACE = DungeonFeatures.create('.', true)
 end
 
 class Level
@@ -115,7 +118,11 @@ class Level
   end
 
   def move_to being, old_x, old_y, new_x, new_y
-    if @beings[new_y][new_x] == nil
+    # there is a monster!!!
+    return @beings[new_y][new_x] if @beings[new_y][new_x] != nil
+
+    # is there a way??
+    if @cell[new_y][new_x] != nil and @cell[new_y][new_x].open_area?
       @beings[old_y][old_x] = nil
       @beings[new_y][new_x] = being
       being.env = @cell[new_y][new_x]
