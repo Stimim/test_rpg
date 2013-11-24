@@ -2,12 +2,14 @@
 
 require 'level'
 require 'display'
-require 'player'
+require 'human'
 
 class Game
   private_class_method :new
 
-  def Game.create file = nil
+  attr_reader :display
+
+  def self.create file = nil
     game = new
     if file != nil
       game.loadGame file
@@ -20,7 +22,12 @@ class Game
   def newGame
     @factory = LevelFactory.instance
     @current_level = LevelFactory.get 0
-    @player = Player.new
+    @player = Human.new
+    @player.gain_control
+    @player.place @current_level
+    if @player.cor_x == nil or @player.cor_y == nil
+      return
+    end
     @display = Display.instance
     @round = 0
   end
@@ -33,12 +40,21 @@ class Game
     @player.show @display.status_bar
     @beings = [@player]
 
-    while true
+    while !over?
       @beings.each do |being|
-        being.next_round @current_level, @display.dungeon
+        being.next_round(self, @current_level, @display)
       end
       @round = @round + 1
+      @current_level.show @display.dungeon
     end
+  end
+
+  def over
+    @over = true
+  end
+
+  def over?
+    @over
   end
 end
 

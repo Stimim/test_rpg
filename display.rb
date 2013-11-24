@@ -7,8 +7,51 @@ class Window < Curses::Window
 end
 
 class MessageWindow < Window
+  MaxLine = 80
   def initialize
-    super(0, 0, 0, 0)
+    super(2, 0, 0, 0)
+
+    # self.scrollok true
+
+    @lines = []
+  end
+
+  def append msg
+    if @lines.size == MaxLine
+      @lines.pop
+    end
+    @lines.unshift msg
+    self.clear
+    self.addstr @lines[0]
+    self.refresh
+  end
+
+  def list_all
+    self.resize(Curses::lines, Curses::cols)
+    length = [Curses::lines - 1, 1].max
+    index = 0
+
+    while true
+      self.clear
+      self.addstr @lines[index...(index+length)].join("\n")
+      self.addstr "\nNext Page '>' Previous Page '<' Quit 'q'"
+
+      self.refresh
+
+      case self.getch
+      when ?>
+        index += length
+        break if index >= @lines.size
+      when ?<
+        index = [index - length, 0].max
+      when ?q
+        break
+      end
+    end
+
+    self.clear
+    self.refresh
+    self.resize(1, Curses::cols)
   end
 end
 
@@ -40,7 +83,7 @@ end
 
 class DungeonWindow < Window
   def initialize
-    super(24, 80, 0, 0)
+    super(24, 80, 1, 0)
   end
 
   def put(char, x, y)
@@ -62,6 +105,7 @@ class Display
 
   def initialize
     Curses.init_screen()
+    Curses.noecho
     @menu = MenuWindow.new
     @dungeon = DungeonWindow.new
     @status_bar = StatusBar.new
