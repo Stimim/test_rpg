@@ -2,6 +2,7 @@
 
 # any beings in the game should extend this class.
 class Being
+  attr_reader :name
   attr_writer :env
   attr_accessor :cor_x
   attr_accessor :cor_y
@@ -12,8 +13,10 @@ class Being
     @env = nil
     @cor_x = nil
     @cor_y = nil
+    @dungeon = nil
   end
 
+  public
   def next_round game, dungeon, display
     @nround = @nround + 1
     if @nround == @rounds_per_move
@@ -22,22 +25,42 @@ class Being
     end
   end
 
-  # returns true if action is done
+  # returns 0 if nothing is done,
+  # returns a positive value indicates number of rounds taken.
+  # returns -1 if this action ends the game
+  private
   def next_move game, dungeon, display
     auto_move game, dungeon, display
   end
 
+  private
   def auto_move game, dungeon, display
-    true
+    1
   end
 
-  def place dungeon
-    ret = dungeon.place self
-    if ret
-      @cor_x = ret[0]
-      @cor_y = ret[1]
-    end
-    return ret
+  # set where I am
+  public
+  def set_location dungeon, x, y, env
+    @dungeon = dungeon
+    @cor_x = x
+    @cor_y = y
+    @env = env
+  end
+
+  public
+  def die
+  end
+
+  # returns "a #{monster name}" or "an #{monster name}"
+  public
+  def a_name
+    return "a #{self.name}"
+  end
+
+  # returns "the #{monster name}"
+  public
+  def the_name
+    return "the #{self.name}"
   end
 end
 
@@ -55,34 +78,59 @@ class ControllableBeing < Being
     @controlled = true
   end
 
-  # cmd is an Fixnum, please implement this function.
-  def take_action game, dungeon, display, cmd
-    suc = false
-    suc = (@env != nil and (@env.take_action self, game, display, cmd)) if !suc
-    suc = (basic_action game, dungeon, display, cmd) if !suc
-    display.message.append "no such command '#{cmd.chr}'" if !suc
-    return true
+  def lose_control
+    @controlled = false
   end
 
+  # returns 0 if nothing is done,
+  # returns a positive value indicates number of rounds taken.
+  # returns -1 if this action ends the game
+  #
+  # cmd is an Fixnum, represents the key user pressed.
+  public
+  def take_action game, dungeon, display, cmd
+    suc = 0
+    suc = (@env != nil and (@env.take_action self, game, display, cmd)) if suc == 0
+    suc = (basic_action game, dungeon, display, cmd) if suc == 0
+    display.message.append "no such command '#{cmd.chr}'" if suc == 0
+    return suc
+  end
+
+  # returns 0 if nothing is done,
+  # returns a positive value indicates number of rounds taken.
+  # returns -1 if this action ends the game
+  public
   def control game, dungeon, display
     cmd = display.dungeon.getch
-    take_action game, dungeon, display, cmd
+    display.message.clear
+    display.message.refresh
+    result = take_action game, dungeon, display, cmd
+    return result
   end
 
   private
-  def move_to dungeon, delta_x, delta_y
-    if dungeon.move_to(self, cor_x, cor_y, cor_x + delta_x, cor_y + delta_y)
+  def move_to dungeon, display, delta_x, delta_y
+    result = dungeon.move_to(self, cor_x, cor_y, cor_x + delta_x, cor_y + delta_y)
+    if result.is_a? DungeonFeatures
       @cor_x = cor_x + delta_x
       @cor_y = cor_y + delta_y
+      @env = result
+    elsif result.is_a? Being
+      # there is a monster!!!
+      display.message.append "There is #{result.a_name}"
+      return 0
     else
       display.message.append "You can't go that way..."
+      return 0
     end
   end
 
   public
   def basic_action game, dungeon, display, cmd
+    result = 0
     case cmd
     when ?Q
+      result = -1
       display.message.append "Quit? [y/N]"
       answer = display.message.getch
       if answer == ?Y or answer == ?y
@@ -90,18 +138,16 @@ class ControllableBeing < Being
       else
         display.message.append "Never mind."
       end
-    when ?l then move_to dungeon, 1, 0
-    when ?h then move_to dungeon, -1, 0
-    when ?j then move_to dungeon, 0, 1
-    when ?k then move_to dungeon, 0, -1
-    when ?y then move_to dungeon, -1, -1
-    when ?u then move_to dungeon, 1, -1
-    when ?b then move_to dungeon, -1, 1
-    when ?n then move_to dungeon, 1, 1
+    when ?l then result = move_to dungeon, display, 1, 0
+    when ?h then result = move_to dungeon, display, -1, 0
+    when ?j then result = move_to dungeon, display, 0, 1
+    when ?k then result = move_to dungeon, display, 0, -1
+    when ?y then result = move_to dungeon, display, -1, -1
+    when ?u then result = move_to dungeon, display, 1, -1
+    when ?b then result = move_to dungeon, display, -1, 1
+    when ?n then result = move_to dungeon, display, 1, 1
     when ?\C-p then display.message.list_all
-    else
-      return false
     end
-    return true
+    return result
   end
 end

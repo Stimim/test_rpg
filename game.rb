@@ -24,7 +24,7 @@ class Game
     @current_level = LevelFactory.get 0
     @player = Human.new
     @player.gain_control
-    @player.place @current_level
+    @current_level.place @player
     if @player.cor_x == nil or @player.cor_y == nil
       return
     end

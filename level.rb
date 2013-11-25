@@ -17,7 +17,7 @@ class DungeonFeatures
 
   def take_action who, game, display, cmd
     return @do_cmd.call(who, game, display, cmd) if @do_cmd.is_a? Proc
-    return false
+    return 0
   end
 
   def draw window, x, y
@@ -33,24 +33,23 @@ class DungeonFeatures
   STAIR_UP = DungeonFeatures.create('<', true, lambda do |who, game, display, cmd|
     if cmd == ?<
       display.message.append "go upstair"
-      return true
+      return 1
     end
-    return false
+    return 0
   end)
 
   STAIR_DOWN = DungeonFeatures.create('>', true, lambda do |who, game, display, cmd|
     if cmd == ?>
       display.message.append "go downstair"
-      return true
+      return 1
     end
-    return false
+    return 0
   end)
 
   SPACE = DungeonFeatures.create('.', true)
 end
 
 class Level
-
   attr_reader :name
 
   def initialize name, options
@@ -98,7 +97,6 @@ class Level
           (5..10).each do |x|
             if @beings[y][x] == nil
               @beings[y][x] = being
-              being.env = @cell[y][x]
               success = [x, y]
               throw :done
             end
@@ -110,10 +108,12 @@ class Level
       y = place_option[1]
       if @beings[y][x] == nil
         @beings[y][x] = being
-        being.env = @cell[y][x]
         success = [x, y]
       end
     end
+    x = success[0]
+    y = success[1]
+    being.set_location(self, x, y, @cell[y][x]) if success
     return success
   end
 
@@ -126,7 +126,7 @@ class Level
       @beings[old_y][old_x] = nil
       @beings[new_y][new_x] = being
       being.env = @cell[new_y][new_x]
-      return true
+      return @cell[new_y][new_x]
     end
     return false
   end
