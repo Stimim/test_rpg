@@ -2,6 +2,7 @@
 
 require 'singleton'
 require 'curses'
+require 'level'
 
 class Window < Curses::Window
 end
@@ -9,9 +10,7 @@ end
 class MessageWindow < Window
   MaxLine = 80
   def initialize
-    super(2, 0, 0, 0)
-
-    # self.scrollok true
+    super(1, 0, 0, 0)
 
     @lines = []
   end
@@ -83,18 +82,51 @@ end
 
 class DungeonWindow < Window
   def initialize
-    super(24, 80, 1, 0)
+    super(Level::MAX_Y, Level::MAX_X, 1, 0)
+
+    @cache = Array.new(Level::MAX_Y) { Array.new(Level::MAX_X, nil) }
   end
 
-  def put(char, x, y)
-    self.setpos(x, y)
-    self.addch(char)
+  public
+  def put(what, y, x)
+    case what
+    when DungeonFeature
+      char = dungeon_feature_to_char what
+    when Being
+      char = being_to_char what
+    else
+      char = ??
+    end
+
+    #if @cache[y][x] != char
+      self.setpos(y, x)
+      self.addch(char)
+      @cache[y][x] = char
+    #end
+  end
+
+  private
+  def dungeon_feature_to_char feature
+    case feature
+    when DungeonFeature::STAIR_UP then ?<
+    when DungeonFeature::STAIR_DOWN then ?>
+    when DungeonFeature::SPACE then ?.
+    end
+  end
+
+  private
+  def being_to_char being
+    case being
+    when Human then ?@
+    else
+      ?X
+    end
   end
 end
 
 class StatusBar < Window
   def initialize
-    super(2, 80, 25, 0)
+    super(2, 80, 21, 0)
   end
 end
 
