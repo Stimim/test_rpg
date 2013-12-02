@@ -7,17 +7,21 @@ class Human < ControllableBeing
     "human"
   end
 
-  def take_action game, dungeon, display, cmd
+  def take_action cmd
     case cmd
     when ?p
-      display.message.append "hahaha"
+      # display.message.append "hahaha"
     else
-      super game, dungeon, display, cmd
+      super cmd
     end
   end
 
   def draw window, x, y
     window.setpos(x, y)
     window << "@"
+  end
+
+  def symbol
+    :HUMAN
   end
 end

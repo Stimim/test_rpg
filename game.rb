@@ -1,65 +1,69 @@
 #!/usr/bin/env ruby
 
-require 'level'
-require 'display'
-require 'human'
+require './provider.rb'
+require './human.rb'
 
 class Game
-  private_class_method :new
+  include Singleton
 
-  attr_reader :display
-
-  def self.create file = nil
-    game = new
-    if file != nil
-      game.loadGame file
-    else
-      game.newGame
-    end
-    return game
+  public
+  def initialize
+    @over = false
+    @player = Provider.get_player
+    @dungeon = Provider.get_dungeon
+    @monsters = []
   end
 
-  def newGame
-    @factory = LevelFactory.instance
-    @current_level = LevelFactory.get 0
-    @player = Human.new
-    @monster = Human.new
-    @player.gain_control
-    @current_level.place @player
-    @current_level.place @monster, [6, 6]
-    if @player.cor_x == nil or @player.cor_y == nil
-      return
-    end
-    @display = Display.instance
+  public
+  def new_game
     @round = 0
+
+    human = Human.new
+
+    @player.add_member human
+
+    @dungeon.enter_level 0
+
+    # @dungeon.create_monster
   end
 
-  def loadGame file
+  public
+  def over?
+    @over
   end
 
-  def start
-    @current_level.show @display.dungeon
-    @beings = [@player, @monster]
-
-    while !over?
-      @beings.each do |being|
-        result = 0
-        while result == 0
-          result = being.next_round(self, @current_level, @display)
-        end
-      end
-      @round = @round + 1
-      @current_level.show @display.dungeon
-    end
+  public
+  def alive?
+    not @over
   end
 
+  public
   def over
     @over = true
   end
 
-  def over?
-    @over
+  # TODO implement this
+  public
+  def load_game filename
+  end
+
+  public
+  def game_loop
+    while true
+      @round = @round + 1
+
+      # monsters under player's control always move first
+      @player.each_member do |m|
+        m.tick
+      end
+
+      @monsters.each do |m|
+        m.tick
+      end
+    end
   end
 end
 
-Game.create().start
+Provider.get_game.new_game
+Provider.get_game.game_loop
+
