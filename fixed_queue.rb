@@ -4,6 +4,8 @@ class FixedQueue
   attr_reader :cap
   attr_reader :size
 
+  include Enumerable
+
   def initialize _cap
     @cap = _cap
     @array = Array.new(_cap)
@@ -44,6 +46,10 @@ class FixedQueue
       yield @array[(@head + i) % @cap]
       i += 1
     end
+  end
+
+  def to_a
+    collect { |x| x }
   end
 
   private

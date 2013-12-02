@@ -24,7 +24,7 @@ class Game
 
     @dungeon.enter_level 0
 
-    # @dungeon.create_monster
+    @monsters.push @dungeon.create_monster
   end
 
   public
@@ -49,7 +49,7 @@ class Game
 
   public
   def game_loop
-    while true
+    while not over?
       @round = @round + 1
 
       # monsters under player's control always move first

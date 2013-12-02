@@ -75,10 +75,6 @@ class Level
       @dx = Kernel.rand(Dungeon::NCOL)
     end while @dx == @ux and @dy == @uy
 
-    #@uy = 5
-    #@ux = 5
-    #@dy = 8
-    #@dx = 8
     @cell[@uy][@ux] = DungeonFeature::STAIR_UP
     @cell[@dy][@dx] = DungeonFeature::STAIR_DOWN
   end
@@ -134,9 +130,17 @@ class Level
   end
 
   def whats_there? x, y
-    return @monster[y][x].symbol if @monster[y][x] != nil
-    return @pile[y][x][-1].symbol if not @pile[y][x].empty?
-    return @cell[y][x].symbol
+    ground, item, monster = nil, nil, nil
+    if @monster[y][x] != nil
+      monster = @monster[y][x].symbol
+    end
+
+    if not @pile[y][x].empty?
+      item = @pile[y][x][-1].symbol
+    end
+
+    ground = @cell[y][x].symbol
+    return ground, item, monster
   end
 
   def blocked? x, y
@@ -207,5 +211,11 @@ class Dungeon
 
   def in_range? x, y
     return (0 <= y and y < NROW and 0 <= x and x < NCOL)
+  end
+
+  def create_monster
+    monster = Human.new
+    @current_level.add_monster monster, :OTHER
+    return monster
   end
 end

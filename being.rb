@@ -61,6 +61,7 @@ class Being
   @@moves = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]
   private
   def ai_move
+    cost = 0
     @@moves.each do |dx, dy|
       cost = try_move_to(cor_x + dx, cor_y + dy)
 

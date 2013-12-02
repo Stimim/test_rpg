@@ -16,4 +16,6 @@ $symbols = [
 
   :STAIR_UP, :STAIR_DOWN,
   :DOOR_NS, :DOOR_WE, :FOUNTAIN, :GROUND,
+
+  :NO_MEMORY
 ]
